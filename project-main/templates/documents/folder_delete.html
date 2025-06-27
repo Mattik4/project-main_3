@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Usuń folder{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="h3 mb-4 text-gray-800">Usuń folder</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Czy na pewno chcesz usunąć folder: {{ folder.nazwa }}?</h6>
+        </div>
+        <div class="card-body">
+            <p>Tej operacji nie można cofnąć.</p>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Usuń</button>
+                <a href="{% url 'documents:folder_view' folder.id %}" class="btn btn-secondary">Anuluj</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

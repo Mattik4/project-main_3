@@ -1,0 +1,70 @@
+Table Name,Column Name,Data Type,Primary Key,Not Null,Unique,Default Value,Description
+users,id,INT,Yes,Yes,Yes,,Identyfikator użytkownika
+users,username,VARCHAR(50),No,Yes,Yes,,Nazwa użytkownika
+users,email,VARCHAR(100),No,Yes,Yes,,Adres email
+users,password,VARCHAR(128),No,Yes,No,,Hasło użytkownika
+users,first_name,VARCHAR(50),No,No,No,,Imię
+users,last_name,VARCHAR(50),No,No,No,,Nazwisko
+users,is_active,BIT,No,Yes,No,1,Czy konto jest aktywne
+users,is_admin,BIT,No,Yes,No,0,Czy użytkownik jest administratorem
+users,created_at,DATETIME,No,Yes,No,GETDATE(),Data utworzenia konta
+users,last_login,DATETIME,No,No,No,,Data ostatniego logowania
+roles,id,INT,Yes,Yes,Yes,,Identyfikator roli
+roles,name,VARCHAR(50),No,Yes,Yes,,Nazwa roli
+roles,description,TEXT,No,No,No,,Opis roli
+user_roles,id,INT,Yes,Yes,Yes,,Identyfikator przypisania roli
+user_roles,user_id,INT,No,Yes,No,,Identyfikator użytkownika
+user_roles,role_id,INT,No,Yes,No,,Identyfikator roli
+user_roles,assigned_at,DATETIME,No,Yes,No,GETDATE(),Data przypisania roli
+folders,id,INT,Yes,Yes,Yes,,Identyfikator folderu
+folders,name,VARCHAR(255),No,Yes,No,,Nazwa folderu
+folders,parent_id,INT,No,No,No,,Identyfikator folderu nadrzędnego
+folders,owner_id,INT,No,Yes,No,,Identyfikator właściciela
+folders,created_at,DATETIME,No,Yes,No,GETDATE(),Data utworzenia
+folders,updated_at,DATETIME,No,Yes,No,GETDATE(),Data aktualizacji
+documents,id,INT,Yes,Yes,Yes,,Identyfikator dokumentu
+documents,name,VARCHAR(255),No,Yes,No,,Nazwa dokumentu
+documents,description,TEXT,No,No,No,,Opis dokumentu
+documents,file_size,INT,No,Yes,No,,Rozmiar pliku
+documents,file_type,VARCHAR(50),No,Yes,No,,Typ pliku
+documents,content,VARBINARY(MAX),No,Yes,No,,Zawartość dokumentu
+documents,folder_id,INT,No,No,No,,Identyfikator folderu
+documents,owner_id,INT,No,Yes,No,,Identyfikator właściciela
+documents,created_at,DATETIME,No,Yes,No,GETDATE(),Data utworzenia
+documents,updated_at,DATETIME,No,Yes,No,GETDATE(),Data aktualizacji
+documents,is_encrypted,BIT,No,Yes,No,0,Czy dokument jest zaszyfrowany
+document_versions,id,INT,Yes,Yes,Yes,,Identyfikator wersji
+document_versions,document_id,INT,No,Yes,No,,Identyfikator dokumentu
+document_versions,version_number,INT,No,Yes,No,,Numer wersji
+document_versions,content,VARBINARY(MAX),No,Yes,No,,Zawartość wersji
+document_versions,file_size,INT,No,Yes,No,,Rozmiar pliku
+document_versions,created_by,INT,No,Yes,No,,Identyfikator twórcy
+document_versions,created_at,DATETIME,No,Yes,No,GETDATE(),Data utworzenia
+document_versions,comment,TEXT,No,No,No,,Komentarz do wersji
+tags,id,INT,Yes,Yes,Yes,,Identyfikator tagu
+tags,name,VARCHAR(50),No,Yes,Yes,,Nazwa tagu
+tags,created_at,DATETIME,No,Yes,No,GETDATE(),Data utworzenia
+document_tags,id,INT,Yes,Yes,Yes,,Identyfikator powiązania
+document_tags,document_id,INT,No,Yes,No,,Identyfikator dokumentu
+document_tags,tag_id,INT,No,Yes,No,,Identyfikator tagu
+document_permissions,id,INT,Yes,Yes,Yes,,Identyfikator uprawnienia
+document_permissions,document_id,INT,No,Yes,No,,Identyfikator dokumentu
+document_permissions,user_id,INT,No,Yes,No,,Identyfikator użytkownika
+document_permissions,can_read,BIT,No,Yes,No,1,Uprawnienie do odczytu
+document_permissions,can_write,BIT,No,Yes,No,0,Uprawnienie do zapisu
+document_permissions,can_delete,BIT,No,Yes,No,0,Uprawnienie do usuwania
+document_permissions,can_share,BIT,No,Yes,No,0,Uprawnienie do udostępniania
+document_permissions,granted_by,INT,No,Yes,No,,Identyfikator osoby nadającej
+document_permissions,granted_at,DATETIME,No,Yes,No,GETDATE(),Data nadania uprawnień
+document_comments,id,INT,Yes,Yes,Yes,,Identyfikator komentarza
+document_comments,document_id,INT,No,Yes,No,,Identyfikator dokumentu
+document_comments,user_id,INT,No,Yes,No,,Identyfikator użytkownika
+document_comments,content,TEXT,No,Yes,No,,Treść komentarza
+document_comments,created_at,DATETIME,No,Yes,No,GETDATE(),Data utworzenia
+activity_logs,id,INT,Yes,Yes,Yes,,Identyfikator logu
+activity_logs,user_id,INT,No,Yes,No,,Identyfikator użytkownika
+activity_logs,action_type,VARCHAR(50),No,Yes,No,,Typ akcji
+activity_logs,action_details,TEXT,No,No,No,,Szczegóły akcji
+activity_logs,document_id,INT,No,No,No,,Identyfikator dokumentu
+activity_logs,ip_address,VARCHAR(45),No,No,No,,Adres IP
+activity_logs,created_at,DATETIME,No,Yes,No,GETDATE(),Data utworzenia

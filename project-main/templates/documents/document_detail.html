@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load guardian_tags %} {# If you use guardian for permissions in template directly #}
+
+{% block title %}{{ document.nazwa }} - Document Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Document Main Info Card -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="{{ document.get_file_icon }} me-2"></i>{{ document.nazwa }}
+                </h5>
+                <div>
+                    {% if document.status == 'published' %}
+                        <span class="badge bg-success">Opublikowany</span>
+                    {% elif document.status == 'draft' %}
+                        <span class="badge bg-warning text-dark">Szkic</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Zarchiwizowany</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if document.opis %}
+                    <p class="card-text">{{ document.opis|linebreaksbr }}</p>
+                {% else %}
+                    <p class="card-text text-muted"><em>Brak opisu.</em></p>
+                {% endif %}
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <strong>Folder:</strong> 
+                        {% if document.folder %}
+                            <a href="{% url 'documents:folder_view' document.folder.id %}">{{ document.folder.get_full_path }}</a>
+                        {% else %}
+                            Brak (główny)
+                        {% endif %}
+                        <br>
+                        <strong>Właściciel:</strong> {{ document.wlasciciel.get_full_name|default:document.wlasciciel.email }}<br>
+                        <strong>Rozmiar:</strong> {{ document.get_file_size_display }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Utworzono:</strong> {{ document.data_utworzenia|date:"d.m.Y H:i" }}<br>
+                        <strong>Modyfikowano:</strong> {{ document.ostatnia_modyfikacja|date:"d.m.Y H:i" }}<br>
+                        <strong>Tagi:</strong>
+                        {% for tag in document.tagi.all %}
+                            <span class="badge me-1" style="background-color: {{ tag.kolor }}; color: #fff;">{{ tag.nazwa }}</span>
+                        {% empty %}
+                            <span class="text-muted">Brak tagów</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light">
+                <div class="d-flex justify-content-start gap-2">
+                    {% if can_download_this_document and document.plik %}
+                    <a href="{% url 'documents:document_download' document.id %}" class="btn btn-success btn-sm">
+                        <i class="bi bi-download me-2"></i>Pobierz
+                    </a>
+                    {% endif %}
+                    {% if can_preview_this_document and document.plik %}
+                    <a href="{% url 'documents:document_preview' document.id %}" target="_blank" class="btn btn-info btn-sm">
+                        <i class="bi bi-eye me-2"></i>Podgląd
+                    </a>
+                    {% endif %}
+                    {% if can_edit_this_document %}
+                    <a href="{% url 'documents:document_edit' document.id %}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-pencil me-2"></i>Edytuj metadane
+                    </a>
+                    <a href="{% url 'documents:document_version_upload' document.id %}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle me-2"></i>Nowa wersja pliku
+                    </a>
+                    {% endif %}
+                    {% if can_delete_this_document %}
+                    <a href="{% url 'documents:document_delete' document.id %}" class="btn btn-danger btn-sm">
+                        <i class="bi bi-trash me-2"></i>Usuń dokument
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Versions Section -->
+        {% if versions %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-layers me-2"></i>Wersje dokumentu ({{ versions|length }})</h6>
+            </div>
+            <div class="card-body">
+                {% for version in versions %}
+                <div class="d-flex align-items-start mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-1">
+                            <h6 class="mb-0 me-2">Wersja {{ version.numer_wersji }}</h6>
+                            {% if forloop.first %}
+                                <span class="badge bg-success">Aktualna</span>
+                            {% endif %}
+                            <small class="text-muted ms-3">{{ version.data_utworzenia|date:"d.m.Y H:i" }}</small>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="bi bi-person me-1"></i>{{ version.utworzony_przez.get_full_name|default:version.utworzony_przez.email }}
+                                {% if version.rozmiar_pliku %}
+                                    <i class="bi bi-hdd ms-3 me-1"></i>{{ version.get_file_size_display }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        {% if version.komentarz %}
+                            <p class="small mb-0 fst-italic text-muted">
+                                <i class="bi bi-chat-quote me-1"></i>"{{ version.komentarz }}"
+                            </p>
+                        {% endif %}
+                        
+                        
+                    </div>
+                    <div class="text-end">
+                                    {% if version.plik and can_download_this_document %}
+                                        <a href="{% url 'documents:document_version_download' document.pk version.pk %}" class="btn btn-outline-primary btn-sm" title="Pobierz tę wersję">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="card-footer bg-light">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Kliknij "Pobierz" aby pobrać konkretną wersję. Nazwy plików zawierają numer wersji.
+                </small>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Unified Comments Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Wszystkie komentarze</h6>
+            </div>
+            <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                {% if all_comments %}
+                    {% for comment in all_comments %}
+                    <div class="mb-3 pb-2 {% if not forloop.last %}border-bottom{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>{{ comment.uzytkownik.get_full_name|default:comment.uzytkownik.email }}</strong>
+                                <small class="text-muted ms-2">{{ comment.data_utworzenia|date:"d.m.Y H:i" }}</small>
+                            </div>
+                        </div>
+                        {% if comment.wersja_dokumentu %}
+                            <p class="small text-muted mb-1">Komentarz do wersji v{{ comment.wersja_dokumentu.numer_wersji }}</p>
+                        {% endif %}
+                        <p class="mb-1 mt-1">{{ comment.tresc|linebreaksbr }}</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">Brak komentarzy do dokumentu.</p>
+                {% endif %}
+            </div>
+            {% if can_comment_on_this_document %}
+            <div class="card-footer bg-light">
+                <form method="post" action="{% url 'documents:document_detail' document.pk %}" id="comment-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="parent_id" id="parent_id_input" value="">
+                    <div class="mb-2">
+                        {{ comment_form.tresc }}
+                        {% if comment_form.tresc.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in comment_form.tresc.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {{ comment_form.dokument }}
+                    {{ comment_form.wersja_dokumentu }}
+                    <button type="submit" name="submit_comment" class="btn btn-primary btn-sm">
+                        <i class="bi bi-send me-2"></i>Dodaj komentarz
+                    </button>
+                </form>
+            </div>
+            {% else %}
+            <div class="card-footer text-muted small">
+                Nie masz uprawnień do dodawania komentarzy do dokumentu.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Smooth scroll to comments if hash is present
+    if(window.location.hash === '#comments-section') {
+        const commentsSection = document.querySelector('a[name="comments-section"]');
+        if (commentsSection) {
+            commentsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+});
+</script>
+<style>
+.comment-item:last-child {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+}
+.comment-reply {
+    background-color: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+}
+</style>
+{% endblock %}

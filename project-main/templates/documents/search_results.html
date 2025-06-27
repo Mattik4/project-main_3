@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Search Results - DocManager
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Search Results for "{{ query }}"</h2>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" id="searchTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents-pane" type="button" role="tab" aria-controls="documents-pane" aria-selected="true">Documents ({{ documents|length }})</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="folders-tab" data-bs-toggle="tab" data-bs-target="#folders-pane" type="button" role="tab" aria-controls="folders-pane" aria-selected="false">Folders ({{ folders|length }})</button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <div class="tab-content" id="searchTabsContent">
+            <div class="tab-pane fade show active" id="documents-pane" role="tabpanel" aria-labelledby="documents-tab" tabindex="0">
+                {% if documents %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th><i class="bi bi-type"></i> Name</th>
+                                    <th><i class="bi bi-tags"></i> Tags</th>
+                                    <th><i class="bi bi-calendar"></i> Last Modified</th>
+                                    <th><i class="bi bi-hdd"></i> Size</th>
+                                    <th><i class="bi bi-person"></i> Owner</th>
+                                    <th width="80"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for document in documents %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="{{ document.get_file_icon }} me-2"></i>
+                                                <a href="{% url 'documents:document_detail' document.id %}" class="text-decoration-none">{{ document.nazwa }}</a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% for tag in document.tagi.all %}<span class="badge bg-info text-dark me-1">{{ tag.nazwa }}</span>{% endfor %}
+                                        </td>
+                                        <td>{{ document.ostatnia_modyfikacja|date:"d.m.Y H:i" }}</td>
+                                        <td>{{ document.get_file_size_display }}</td>
+                                        <td>{{ document.wlasciciel.get_full_name|default:document.wlasciciel.email }}</td>
+                                        <td>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                                                <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item" href="{% url 'documents:document_detail' document.id %}">Details</a></li>
+                                                    <li><a class="dropdown-item" href="{% url 'documents:document_download' document.id %}">Download</a></li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No documents found matching your search criteria.</p>
+                {% endif %}
+            </div>
+            <div class="tab-pane fade" id="folders-pane" role="tabpanel" aria-labelledby="folders-tab" tabindex="0">
+                {% if folders %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th><i class="bi bi-type"></i> Name</th>
+                                    <th><i class="bi bi-tags"></i> Tags</th>
+                                    <th><i class="bi bi-calendar"></i> Created</th>
+                                    <th><i class="bi bi-person"></i> Owner</th>
+                                    <th width="80"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for folder in folders %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-folder-fill text-primary me-2"></i>
+                                                <a href="{% url 'documents:folder_view' folder.id %}" class="text-decoration-none">{{ folder.nazwa }}</a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% for tag in folder.tagi.all %}<span class="badge bg-info text-dark me-1">{{ tag.nazwa }}</span>{% endfor %}
+                                        </td>
+                                        <td>{{ folder.data_utworzenia|date:"d.m.Y H:i" }}</td>
+                                        <td>{{ folder.wlasciciel.get_full_name|default:folder.wlasciciel.email }}</td>
+                                        <td>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                                                <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item" href="{% url 'documents:folder_view' folder.id %}">Open</a></li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Nie znaleziono folderów spełniających kryteria wyszukiwania.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Edytuj folder{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="h3 mb-4 text-gray-800">Edytuj folder</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Edytuj folder: {{ folder.nazwa }}</h6>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

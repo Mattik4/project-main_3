@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Utwórz folder{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="h3 mb-4 text-gray-800">Utwórz folder</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Nowy folder</h6>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Utwórz</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

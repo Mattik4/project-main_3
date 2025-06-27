@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Log Aktywności{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="h3 mb-4 text-gray-800">Log Aktywności</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filtruj Logi Aktywności</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-center">
+                <div class="col-md-3">
+                    <label for="user_query" class="form-label visually-hidden">Użytkownik</label>
+                    <input type="text" class="form-control" id="user_query" name="user" placeholder="Użytkownik" value="{{ user_query }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="action_query" class="form-label visually-hidden">Typ Aktywności</label>
+                    <select class="form-select" id="action_query" name="action">
+                        <option value="">Wszystkie typy</option>
+                        {% for choice_value, choice_label in action_choices %}
+                            <option value="{{ choice_value }}" {% if action_query == choice_value %}selected{% endif %}>{{ choice_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="document_query" class="form-label visually-hidden">Dokument</label>
+                    <input type="text" class="form-control" id="document_query" name="document" placeholder="Dokument" value="{{ document_query }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="folder_query" class="form-label visually-hidden">Folder</label>
+                    <input type="text" class="form-control" id="folder_query" name="folder" placeholder="Folder" value="{{ folder_query }}">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-funnel"></i> Filtruj</button>
+                    <a href="{% url 'documents:activity_log_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise"></i> Resetuj</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Lista Logów Aktywności</h6>
+        </div>
+        <div class="card-body">
+            {% if activity_logs %}
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Użytkownik</th>
+                            <th>Typ Aktywności</th>
+                            <th>Dokument</th>
+                            <th>Folder</th>
+                            <th>Szczegóły</th>
+                            <th>Czas</th>
+                            <th>Adres IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in activity_logs %}
+                        <tr>
+                            <td>{{ log.uzytkownik.username }}</td>
+                            <td>{{ log.get_typ_aktywnosci_display }}</td>
+                            <td>
+                                {% if log.dokument %}
+                                    <a href="{% url 'documents:document_detail' log.dokument.pk %}">{{ log.dokument.nazwa }}</a>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.folder %}
+                                    {{ log.folder.nazwa }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>{{ log.szczegoly }}</td>
+                            <td>{{ log.znacznik_czasu|date:"Y-m-d H:i" }}</td>
+                            <td>{{ log.adres_ip|default:"N/A" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p>Brak logów aktywności do wyświetlenia.</p>
+            {% endif %}
+
+            {% if is_paginated %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&user={{ user_query }}&action={{ action_query }}&document={{ document_query }}&folder={{ folder_query }}">Poprzednia</a></li>
+                        {% endif %}
+                        <li class="page-item active"><span class="page-link">{{ page_obj.number }} z {{ page_obj.paginator.num_pages }}</span></li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&user={{ user_query }}&action={{ action_query }}&document={{ document_query }}&folder={{ folder_query }}">Następna</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

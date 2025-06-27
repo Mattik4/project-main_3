@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+
+{% block title %}Edytuj {{ document.nazwa }} - Document Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pencil me-2"></i>Edytuj dokument
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Current file info -->
+                <div class="alert alert-info">
+                    <div class="d-flex align-items-center">
+                        <i class="{{ document.get_file_icon }} me-3" style="font-size: 2rem;"></i>
+                        <div>
+                            <strong>{{ document.nazwa }}</strong><br>
+                            <small class="text-muted">
+                                {{ document.get_file_size_display }} | 
+                                Dodano: {{ document.data_utworzenia|date:"d.m.Y H:i" }} |
+                                Modyfikowano: {{ document.ostatnia_modyfikacja|date:"d.m.Y H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.nazwa.id_for_label }}" class="form-label">
+                            Nazwa dokumentu <span class="text-danger">*</span>
+                        </label>
+                        {{ form.nazwa }}
+                        {% if form.nazwa.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.nazwa.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Zmiana nazwy nie wpływa na oryginalny plik.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.opis.id_for_label }}" class="form-label">
+                            Opis
+                        </label>
+                        {{ form.opis }}
+                        {% if form.opis.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.opis.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Dodaj opis aby ułatwić innym zrozumienie zawartości dokumentu.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.folder.id_for_label }}" class="form-label">
+                            Folder <span class="text-danger">*</span>
+                        </label>
+                        {{ form.folder }}
+                        {% if form.folder.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.folder.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Obecny folder: <strong>{{ document.folder.get_full_path }}</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">
+                            Status
+                        </label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.status.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Obecny status: 
+                            {% if document.status == 'published' %}
+                                <span class="badge bg-success">Opublikowany</span>
+                            {% elif document.status == 'draft' %}
+                                <span class="badge bg-warning">Szkic</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Zarchiwizowany</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Tagi</label>
+                        {{ form.tagi }}
+                        {% if form.tagi.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.tagi.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Obecne tagi: 
+                            {% for tag in document.tagi.all %}
+                                <span class="badge me-1" style="background-color: {{ tag.kolor }};">{{ tag.nazwa }}</span>
+                            {% empty %}
+                                <span class="text-muted">Brak tagów</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- File Actions -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="bi bi-file-earmark-arrow-up me-2"></i>Akcje na pliku
+                            </h6>
+                            <p class="card-text small text-muted mb-3">
+                                Aby zmienić zawartość pliku, możesz dodać nową wersję lub zastąpić istniejący plik.
+                            </p>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'documents:document_version_upload' document.id %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-plus-circle me-2"></i>Dodaj nową wersję
+                                </a>
+                                {% if document.plik %}
+                                    <a href="{% url 'documents:document_download' document.id %}" class="btn btn-outline-success btn-sm">
+                                        <i class="bi bi-download me-2"></i>Pobierz aktualny plik
+                                    </a>
+                                    {% if document.can_preview %}
+                                        <a href="{% url 'documents:document_preview' document.id %}" target="_blank" class="btn btn-outline-info btn-sm">
+                                            <i class="bi bi-eye me-2"></i>Podgląd
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'documents:document_detail' document.id %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Anuluj
+                        </a>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg me-2"></i>Zapisz zmiany
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Metadata Card -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Informacje o dokumencie
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">Właściciel:</dt>
+                            <dd class="col-sm-8">{{ document.wlasciciel.get_full_name|default:document.wlasciciel.email }}</dd>
+                            
+                            <dt class="col-sm-4">Rozmiar:</dt>
+                            <dd class="col-sm-8">{{ document.get_file_size_display }}</dd>
+                            
+                            <dt class="col-sm-4">Typ pliku:</dt>
+                            <dd class="col-sm-8">{{ document.typ_pliku }}</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">Utworzono:</dt>
+                            <dd class="col-sm-8">{{ document.data_utworzenia|date:"d.m.Y H:i" }}</dd>
+                            
+                            <dt class="col-sm-4">Modyfikowano:</dt>
+                            <dd class="col-sm-8">{{ document.ostatnia_modyfikacja|date:"d.m.Y H:i" }}</dd>
+                            
+                            <dt class="col-sm-4">Wersje:</dt>
+                            <dd class="col-sm-8">{{ document.wersje.count }} wersji</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const nameInput = document.getElementById('{{ form.nazwa.id_for_label }}');
+    const folderSelect = document.getElementById('{{ form.folder.id_for_label }}');
+    const statusSelect = document.getElementById('{{ form.status.id_for_label }}');
+    
+    // Track changes
+    const originalData = {
+        name: nameInput.value,
+        folder: folderSelect.value,
+        status: statusSelect.value,
+        description: document.getElementById('{{ form.opis.id_for_label }}').value
+    };
+    
+    let hasChanges = false;
+    
+    function checkForChanges() {
+        const currentData = {
+            name: nameInput.value,
+            folder: folderSelect.value,
+            status: statusSelect.value,
+            description: document.getElementById('{{ form.opis.id_for_label }}').value
+        };
+        
+        hasChanges = JSON.stringify(originalData) !== JSON.stringify(currentData);
+        
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (hasChanges) {
+            submitBtn.classList.remove('btn-success');
+            submitBtn.classList.add('btn-warning');
+            submitBtn.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>Zapisz zmiany';
+        } else {
+            submitBtn.classList.remove('btn-warning');
+            submitBtn.classList.add('btn-success');
+            submitBtn.innerHTML = '<i class="bi bi-check-lg me-2"></i>Zapisz zmiany';
+        }
+    }
+    
+    // Add event listeners
+    [nameInput, folderSelect, statusSelect, document.getElementById('{{ form.opis.id_for_label }}')].forEach(element => {
+        element.addEventListener('input', checkForChanges);
+        element.addEventListener('change', checkForChanges);
+    });
+    
+    // Tag checkboxes
+    const tagCheckboxes = document.querySelectorAll('input[name="tagi"]');
+    tagCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', checkForChanges);
+    });
+    
+    // Warn before leaving if there are unsaved changes
+    window.addEventListener('beforeunload', function(e) {
+        if (hasChanges) {
+            e.preventDefault();
+            e.returnValue = 'Masz niezapisane zmiany. Czy na pewno chcesz opuścić tę stronę?';
+        }
+    });
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Zapisywanie...';
+        
+        // Remove beforeunload listener
+        window.removeEventListener('beforeunload', function() {});
+    });
+    
+    // Real-time validation
+    nameInput.addEventListener('input', function() {
+        const name = this.value.trim();
+        
+        if (name.length === 0) {
+            this.classList.add('is-invalid');
+            showFieldError(this, 'Nazwa dokumentu jest wymagana.');
+        } else if (name.length > 255) {
+            this.classList.add('is-invalid');
+            showFieldError(this, 'Nazwa nie może być dłuższa niż 255 znaków.');
+        } else {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+            hideFieldError(this);
+        }
+    });
+    
+    function showFieldError(field, message) {
+        hideFieldError(field);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'invalid-feedback';
+        errorDiv.textContent = message;
+        field.parentNode.appendChild(errorDiv);
+    }
+    
+    function hideFieldError(field) {
+        const existingError = field.parentNode.querySelector('.invalid-feedback');
+        if (existingError) {
+            existingError.remove();
+        }
+    }
+    
+    // Auto-save draft functionality (optional)
+    let autoSaveTimeout;
+    function autoSave() {
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(() => {
+            if (hasChanges) {
+                console.log('Automatyczne zapisywanie szkicu...');
+                // In real implementation, save as draft via AJAX
+            }
+        }, 5000); // Auto-save after 5 seconds of inactivity
+    }
+    
+    [nameInput, document.getElementById('{{ form.opis.id_for_label }}')].forEach(element => {
+        element.addEventListener('input', autoSave);
+    });
+    
+    // Initialize
+    checkForChanges();
+});
+</script>
+
+<style>
+.is-valid {
+    border-color: #28a745;
+}
+
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+}
+
+.card.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+}
+
+@media (max-width: 768px) {
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+    
+    .d-flex.gap-2 .btn {
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
