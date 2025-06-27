@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ folder.nazwa }} - Szczegóły Folderu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Folder Main Info Card -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-folder-fill me-2"></i>{{ folder.nazwa }}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if folder.opis %}
+                    <p class="card-text">{{ folder.opis|linebreaksbr }}</p>
+                {% else %}
+                    <p class="card-text text-muted"><em>Brak opisu.</em></p>
+                {% endif %}
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <strong>Folder nadrzędny:</strong> 
+                        {% if folder.rodzic %}
+                            <a href="{% url 'documents:folder_view' folder.rodzic.id %}">{{ folder.rodzic.get_full_path }}</a>
+                        {% else %}
+                            Brak (główny)
+                        {% endif %}
+                        <br>
+                        <strong>Właściciel:</strong> {{ folder.wlasciciel.get_full_name|default:folder.wlasciciel.email }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Utworzono:</strong> {{ folder.data_utworzenia|date:"d.m.Y H:i" }}<br>
+                        <strong>Tagi:</strong>
+                        {% for tag in folder.tagi.all %}
+                            <span class="badge me-1" style="background-color: {{ tag.kolor }}; color: #fff;">{{ tag.nazwa }}</span>
+                        {% empty %}
+                            <span class="text-muted">Brak tagów</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light">
+                <div class="d-flex justify-content-start gap-2">
+                    {% if can_download_this_folder %}
+                        <a href="{% url 'documents:folder_download_zip' pk=folder.pk %}" class="btn btn-info btn-sm">
+                            <i class="bi bi-download me-2"></i>Pobierz ZIP
+                        </a>
+                    {% endif %}
+                    {% if can_edit_this_folder %}
+                        <a href="{% url 'documents:folder_edit' pk=folder.pk %}" class="btn btn-warning btn-sm">
+                            <i class="bi bi-pencil me-2"></i>Edytuj
+                        </a>
+                    {% endif %}
+                    {% if can_delete_this_folder %}
+                        <a href="{% url 'documents:folder_delete' pk=folder.pk %}" class="btn btn-danger btn-sm">
+                            <i class="bi bi-trash me-2"></i>Usuń
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-files me-2"></i>Zawartość folderu</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                {% if folder.podkatalogi.all %}
+                    {% for subfolder in folder.podkatalogi.all %}
+                        <a href="{% url 'documents:folder_view' folder_id=subfolder.pk %}" class="list-group-item list-group-item-action">
+                            <i class="bi bi-folder me-2"></i>{{ subfolder.nazwa }}
+                        </a>
+                    {% endfor %}
+                {% endif %}
+                {% if folder.documents.all %}
+                    {% for doc in folder.documents.all %}
+                        <a href="{% url 'documents:document_detail' pk=doc.pk %}" class="list-group-item list-group-item-action">
+                            <i class="{{ doc.get_file_icon }} me-2"></i>{{ doc.nazwa }}
+                        </a>
+                    {% endfor %}
+                {% endif %}
+                {% if not folder.podkatalogi.all and not folder.documents.all %}
+                    <div class="list-group-item">
+                        <p class="text-muted mb-0">Ten folder jest pusty.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

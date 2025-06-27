@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{% if current_folder %}
+    {{ current_folder.nazwa }} - Document Manager
+{% else %}
+    Panel główny - DocManager
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Action Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="flex-grow-1">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="{% url 'documents:home' %}" class="text-decoration-none">
+                    <i class="bi bi-house"></i> Strona Główna
+                </a>
+            </li>
+            {% for folder_item_bc in breadcrumbs %}
+                {% if forloop.last %}
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <i class="bi bi-folder"></i> {{ folder_item_bc.nazwa }}
+                    </li>
+                {% else %}
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'documents:folder_view' folder_item_bc.id %}" class="text-decoration-none">
+                            <i class="bi bi-folder"></i> {{ folder_item_bc.nazwa }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+    
+    <!-- Action Buttons -->
+    <div class="btn-group" role="group">
+        {% if user_can_create_documents %}
+        <a href="{% if current_folder %}{% url 'documents:document_upload_to_folder' current_folder.id %}{% else %}{% url 'documents:document_upload' %}{% endif %}" 
+           class="btn btn-primary">
+            <i class="bi bi-file-earmark-plus"></i> Dodaj dokument
+        </a>
+        {% endif %}
+        {% if user_can_create_folders %}
+        <a href="{% if current_folder %}{% url 'documents:folder_create_in_parent' current_folder.id %}{% else %}{% url 'documents:folder_create' %}{% endif %}" 
+           class="btn btn-secondary ms-2">
+            <i class="bi bi-folder-plus"></i> Dodaj folder
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- File Explorer -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+    <h6 class="mb-0">
+        {% if current_folder %}
+            <i class="bi bi-folder-open"></i> {{ current_folder.nazwa }}
+            {% if current_folder.opis %}
+                <small class="text-muted">- {{ current_folder.opis }}</small>
+            {% endif %}
+        {% else %}
+            <i class="bi bi-files"></i> Moje pliki
+        {% endif %}
+    </h6>
+    
+    <div class="btn-group btn-group-sm" role="group">
+        
+    </div>
+</div>
+
+<div class="card-body p-0">
+    <!-- Grid View -->
+    <div id="grid-container" class="p-3">
+        {% if folders or documents %}
+            <div class="row g-3">
+                <!-- Folders in Grid View -->
+                {% for folder_item_grid in folders %}
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                        <div class="file-item folder-item" data-type="folder">
+                            <a href="{% url 'documents:folder_view' folder_item_grid.id %}" class="text-decoration-none">
+                                <div class="file-icon"><i class="bi bi-folder-fill text-primary"></i></div>
+                                <div class="file-name">{{ folder_item_grid.nazwa|truncatechars:20 }}</div>
+                                <div class="file-info">
+                                    <small class="text-muted">{{ folder_item_grid.doc_count }} dok., {{ folder_item_grid.subfolder_count }} pod.</small>
+                                    {% if folder_item_grid.tagi.all %}
+                                    <div class="mt-1">
+                                        {% for tag in folder_item_grid.tagi.all|slice:":2" %}<span class="badge me-1" style="background-color: {{ tag.kolor }}; color: #fff; font-size: 0.6em;">{{ tag.nazwa }}</span>{% endfor %}
+                                        {% if folder_item_grid.tagi.all|length > 2 %}<span class="badge bg-light text-dark" style="font-size: 0.6em;">+{{ folder_item_grid.tagi.all|length|add:"-2" }}</span>{% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </a>
+                            <div class="file-actions dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{% url 'documents:folder_view' folder_item_grid.id %}">Otwórz</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'documents:folder_detail' pk=folder_item_grid.id %}">Szczegóły</a></li>
+                                    {% if folder_item_grid.current_user_can_edit or user_can_create_documents %}
+                                    <li><a class="dropdown-item" href="{% url 'documents:document_upload_to_folder' folder_item_grid.id %}">Dodaj dokument</a></li>
+                                    {% endif %}
+                                    {% if folder_item_grid.current_user_can_edit %}
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-warning" href="{% url 'documents:folder_edit' pk=folder_item_grid.id %}">Edytuj</a></li>
+                                    {% endif %}
+                                    {% if folder_item_grid.current_user_can_delete %}
+                                        <li><a class="dropdown-item text-danger" href="{% url 'documents:folder_delete' pk=folder_item_grid.id %}">Usuń</a></li>
+                                    {% endif %}
+                                    <li><a class="dropdown-item" href="{% url 'documents:folder_download_zip' pk=folder_item_grid.id %}">Pobierz ZIP</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <!-- Documents in Grid View -->
+                {% for document_item_grid in documents %}
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                        <div class="file-item document-item" data-type="document">
+                            <a href="{% url 'documents:document_detail' document_item_grid.id %}" class="text-decoration-none">
+                                <div class="file-icon"><i class="{{ document_item_grid.get_file_icon }} text-success"></i></div>
+                                <div class="file-name">{{ document_item_grid.nazwa|truncatechars:20 }}</div>
+                                <div class="file-info">
+                                    <small class="text-muted">{{ document_item_grid.get_file_size_display }}</small>
+                                    {% if document_item_grid.tagi.all %}
+                                    <div class="mt-1">
+                                        {% for tag in document_item_grid.tagi.all|slice:":2" %}<span class="badge me-1" style="background-color: {{ tag.kolor }}; color: #fff; font-size: 0.6em;">{{ tag.nazwa }}</span>{% endfor %}
+                                        {% if document_item_grid.tagi.all|length > 2 %}<span class="badge bg-light text-dark" style="font-size: 0.6em;">+{{ document_item_grid.tagi.all|length|add:"-2" }}</span>{% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </a>
+                            <div class="file-actions dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{% url 'documents:document_detail' document_item_grid.id %}">Szczegóły</a></li>
+                                    {% if document_item_grid.plik %}
+                                        <li><a class="dropdown-item" href="{% url 'documents:document_download' document_item_grid.id %}">Pobierz</a></li>
+                                    {% endif %}
+                                    {% if document_item_grid.can_preview %}
+                                        <li><a class="dropdown-item" href="{% url 'documents:document_preview' document_item_grid.id %}" target="_blank">Podgląd</a></li>
+                                    {% endif %}
+                                    {% if document_item_grid.current_user_can_edit %}
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-warning" href="{% url 'documents:document_edit' document_item_grid.id %}">Edytuj</a></li>
+                                    {% endif %}
+                                    {% if document_item_grid.current_user_can_delete %}
+                                        <li><a class="dropdown-item text-danger" href="{% url 'documents:document_delete' document_item_grid.id %}">Usuń</a></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                {% include 'documents/partials/empty_folder_content.html' %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+</div>
+
+{% if is_root %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card bg-light border-0">
+            <div class="card-body py-3">
+                <div class="row text-center">
+                    <div class="col-md-4 border-end-md"><div class="d-flex align-items-center justify-content-center"><i class="bi bi-file-earmark-text fs-2 text-primary me-2"></i><div><div class="fw-bold fs-5">{{ total_documents }}</div><small class="text-muted">Dokumentów</small></div></div></div>
+                    <div class="col-md-4 border-end-md mt-3 mt-md-0"><div class="d-flex align-items-center justify-content-center"><i class="bi bi-folder2-open fs-2 text-success me-2"></i><div><div class="fw-bold fs-5">{{ total_folders }}</div><small class="text-muted">Folderów</small></div></div></div>
+                    <div class="col-md-4 mt-3 mt-md-0"><div class="d-flex align-items-center justify-content-center"><i class="bi bi-hdd-stack fs-2 text-info me-2"></i><div><div class="fw-bold fs-5">{{ total_size }}</div><small class="text-muted">Całkowity rozmiar</small></div></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Partial for empty folder message to avoid repetition -->
+{% comment %}
+Create a file named 'empty_folder_content.html' in 'templates/documents/partials/'
+and paste the following code into it:
+
+{% if current_folder %}
+    <i class="bi bi-folder2-open display-1 text-muted mb-3"></i>
+    <h5 class="text-muted">Folder jest pusty</h5>
+    <p class="text-muted mb-4">Ten folder nie zawiera jeszcze żadnych plików ani podfolderów.</p>
+    <div class="d-flex gap-2 justify-content-center">
+        {% if user_can_create_documents %}
+        <a href="{% url 'documents:document_upload_to_folder' current_folder.id %}" class="btn btn-primary"><i class="bi bi-file-earmark-plus me-2"></i>Dodaj dokument</a>
+        {% endif %}
+        {% if user_can_create_folders %}
+        <a href="{% url 'documents:folder_create_in_parent' current_folder.id %}" class="btn btn-secondary"><i class="bi bi-folder-plus me-2"></i>Dodaj folder</a>
+        {% endif %}
+    </div>
+{% else %}
+    <i class="bi bi-files display-1 text-muted mb-3"></i>
+    <h5 class="text-muted">Zacznij organizować swoje pliki</h5>
+    <p class="text-muted mb-4">Nie masz jeszcze żadnych folderów ani dokumentów w widoku głównym.</p>
+    <div class="d-flex gap-2 justify-content-center">
+        {% if user_can_create_documents %}
+        <a href="{% url 'documents:document_upload' %}" class="btn btn-primary"><i class="bi bi-file-earmark-plus me-2"></i>Dodaj pierwszy dokument</a>
+        {% endif %}
+        {% if user_can_create_folders %}
+        <a href="{% url 'documents:folder_create' %}" class="btn btn-secondary"><i class="bi bi-folder-plus me-2"></i>Utwórz pierwszy folder</a>
+        {% endif %}
+    </div>
+{% endif %}
+{% endcomment %}
+
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}

@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+
+{% block title %}Dodaj dokument - Document Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-upload me-2"></i>Dodaj nowy dokument
+                    {% if target_folder %}
+                        <small class="text-muted">do folderu: {{ target_folder.get_full_path }}</small>
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="upload-form">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.plik.id_for_label }}" class="form-label">
+                            Plik <span class="text-danger">*</span>
+                        </label>
+                        {{ form.plik }}
+                        {% if form.plik.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.plik.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Obsługiwane formaty: PDF, DOCX, DOC, XLSX, XLS, TXT, PNG, JPG, JPEG. Maksymalny rozmiar: 50MB.
+                        </div>
+                        <div id="file-preview" class="mt-2"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.nazwa.id_for_label }}" class="form-label">
+                            Nazwa dokumentu
+                        </label>
+                        {{ form.nazwa }}
+                        {% if form.nazwa.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.nazwa.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Jeśli pozostawisz puste, zostanie użyta nazwa pliku.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.opis.id_for_label }}" class="form-label">
+                            Opis
+                        </label>
+                        {{ form.opis }}
+                        {% if form.opis.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.opis.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.folder.id_for_label }}" class="form-label">
+                            Folder <span class="text-danger">*</span>
+                        </label>
+                        {{ form.folder }}
+                        {% if form.folder.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.folder.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">
+                            Status
+                        </label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.status.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Tagi</label>
+                        {{ form.tagi }}
+                        {% if form.tagi.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.tagi.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Wybierz tagi aby łatwiej organizować dokumenty.
+                        </div>
+                    </div>
+                    
+                    <!-- Upload Progress -->
+                    <div id="upload-progress" class="mb-3" style="display: none;">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Postęp wgrywania:</span>
+                            <span id="progress-text">0%</span>
+                        </div>
+                        <div class="progress">
+                            <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted" id="upload-status">Przygotowywanie...</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% if target_folder %}{% url 'documents:folder_view' target_folder.id %}{% else %}{% url 'documents:home' %}{% endif %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Anuluj
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="submit-btn">
+                            <i class="bi bi-upload me-2"></i>Dodaj dokument
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Tips Card -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>Wskazówki
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-success">✓ Dobre praktyki:</h6>
+                        <ul class="list-unstyled small">
+                            <li>• Używaj opisowych nazw plików</li>
+                            <li>• Dodawaj tagi dla łatwiejszego wyszukiwania</li>
+                            <li>• Organizuj pliki w folderach tematycznych</li>
+                            <li>• Dodawaj opisy do ważnych dokumentów</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary">ℹ️ Informacje:</h6>
+                        <ul class="list-unstyled small">
+                            <li>• Maksymalny rozmiar pliku: 50MB</li>
+                            <li>• Pliki są automatycznie skanowane</li>
+                            <li>• Historia wersji jest zachowywana</li>
+                            <li>• Możesz edytować metadane później</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('upload-form');
+    const fileInput = document.getElementById('{{ form.plik.id_for_label }}');
+    const nameInput = document.getElementById('{{ form.nazwa.id_for_label }}');
+    const previewDiv = document.getElementById('file-preview');
+    const submitBtn = document.getElementById('submit-btn');
+    const uploadProgress = document.getElementById('upload-progress');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const uploadStatus = document.getElementById('upload-status');
+    
+    // File validation and preview
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) {
+            previewDiv.innerHTML = '';
+            return;
+        }
+        
+        // Check file size (50MB)
+        const maxSize = 50 * 1024 * 1024;
+        if (file.size > maxSize) {
+            alert('Plik jest za duży! Maksymalny rozmiar to 50MB.');
+            this.value = '';
+            previewDiv.innerHTML = '';
+            return;
+        }
+        
+        // Validate file extension
+        const allowedExtensions = ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'txt', 'png', 'jpg', 'jpeg'];
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        
+        if (!allowedExtensions.includes(fileExtension)) {
+            alert('Nieobsługiwany format pliku! Dozwolone formaty: ' + allowedExtensions.join(', '));
+            this.value = '';
+            previewDiv.innerHTML = '';
+            return;
+        }
+        
+        // Auto-fill name if empty
+        if (!nameInput.value.trim()) {
+            nameInput.value = file.name;
+        }
+        
+        // Get file icon
+        const getFileIcon = (extension) => {
+            const iconMap = {
+                'pdf': 'bi-file-earmark-pdf text-danger',
+                'doc': 'bi-file-earmark-word text-primary',
+                'docx': 'bi-file-earmark-word text-primary',
+                'xls': 'bi-file-earmark-excel text-success',
+                'xlsx': 'bi-file-earmark-excel text-success',
+                'txt': 'bi-file-earmark-text text-secondary',
+                'png': 'bi-file-earmark-image text-info',
+                'jpg': 'bi-file-earmark-image text-info',
+                'jpeg': 'bi-file-earmark-image text-info'
+            };
+            return iconMap[extension] || 'bi-file-earmark text-muted';
+        };
+        
+        // Show file preview
+        const sizeFormatted = (file.size / 1024 / 1024).toFixed(2);
+        previewDiv.innerHTML = `
+            <div class="card border-success">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi ${getFileIcon(fileExtension)} me-3" style="font-size: 2rem;"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">${file.name}</h6>
+                            <small class="text-muted">
+                                Rozmiar: ${sizeFormatted} MB | Typ: ${fileExtension.toUpperCase()}
+                            </small>
+                        </div>
+                        <div class="text-success">
+                            <i class="bi bi-check-circle" style="font-size: 1.5rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Show image preview for image files
+        if (['png', 'jpg', 'jpeg'].includes(fileExtension)) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imagePreview = document.createElement('div');
+                imagePreview.className = 'mt-3 text-center';
+                imagePreview.innerHTML = `
+                    <img src="${e.target.result}" alt="Podgląd" 
+                         class="img-thumbnail" style="max-width: 200px; max-height: 150px;">
+                `;
+                previewDiv.appendChild(imagePreview);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Enhanced form submission with progress simulation
+    form.addEventListener('submit', function(e) {
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            e.preventDefault();
+            alert('Proszę wybrać plik do wgrania.');
+            fileInput.focus();
+            return false;
+        }
+        
+        // Validate file size again
+        if (file.size > 50 * 1024 * 1024) {
+            e.preventDefault();
+            alert('Wybrany plik jest za duży (maksymalnie 50MB).');
+            return false;
+        }
+        
+        // Show upload progress
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Wgrywanie...';
+        uploadProgress.style.display = 'block';
+        
+        // Simulate upload progress
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 10 + 5;
+            if (progress > 95) progress = 95;
+            
+            progressBar.style.width = progress + '%';
+            progressText.textContent = Math.round(progress) + '%';
+            
+            // Update status messages
+            if (progress < 30) {
+                uploadStatus.textContent = 'Sprawdzanie pliku...';
+            } else if (progress < 60) {
+                uploadStatus.textContent = 'Przesyłanie danych...';
+            } else if (progress < 90) {
+                uploadStatus.textContent = 'Przetwarzanie dokumentu...';
+            } else {
+                uploadStatus.textContent = 'Finalizowanie...';
+                clearInterval(interval);
+            }
+        }, 150);
+        
+        return true;
+    });
+    
+    // Auto-focus file input
+    fileInput.focus();
+    
+    // Drag and drop functionality
+    const createDropZone = () => {
+        const dropZone = document.createElement('div');
+        dropZone.className = 'border border-dashed border-primary rounded p-4 text-center bg-light mt-2';
+        dropZone.innerHTML = `
+            <i class="bi bi-cloud-upload display-4 text-primary mb-2"></i>
+            <p class="mb-0">Przeciągnij i upuść plik tutaj lub kliknij, aby wybrać</p>
+        `;
+        
+        fileInput.parentNode.appendChild(dropZone);
+        
+        // Click to open file dialog
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        // Drag and drop events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('border-success', 'bg-success', 'bg-opacity-10');
+            }, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('border-success', 'bg-success', 'bg-opacity-10');
+            }, false);
+        });
+        
+        dropZone.addEventListener('drop', handleDrop, false);
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        }
+    };
+    
+    // Create drop zone
+    createDropZone();
+});
+</script>
+{% endblock %}

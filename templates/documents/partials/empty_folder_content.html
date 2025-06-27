@@ -1,0 +1,25 @@
+{% if current_folder %}
+    <i class="bi bi-folder2-open display-1 text-muted mb-3"></i>
+    <h5 class="text-muted">Folder jest pusty</h5>
+    <p class="text-muted mb-4">Ten folder nie zawiera jeszcze żadnych plików ani podfolderów.</p>
+    <div class="d-flex gap-2 justify-content-center">
+        {% if user_can_create_documents %}
+        <a href="{% url 'documents:document_upload_to_folder' current_folder.id %}" class="btn btn-primary"><i class="bi bi-file-earmark-plus me-2"></i>Dodaj dokument</a>
+        {% endif %}
+        {% if user_can_create_folders %}
+        <a href="{% url 'documents:folder_create_in_parent' current_folder.id %}" class="btn btn-secondary"><i class="bi bi-folder-plus me-2"></i>Dodaj folder</a>
+        {% endif %}
+    </div>
+{% else %}
+    <i class="bi bi-files display-1 text-muted mb-3"></i>
+    <h5 class="text-muted">Zacznij organizować swoje pliki</h5>
+    <p class="text-muted mb-4">Nie masz jeszcze żadnych folderów ani dokumentów w widoku głównym.</p>
+    <div class="d-flex gap-2 justify-content-center">
+        {% if user_can_create_documents %}
+        <a href="{% url 'documents:document_upload' %}" class="btn btn-primary"><i class="bi bi-file-earmark-plus me-2"></i>Dodaj pierwszy dokument</a>
+        {% endif %}
+        {% if user_can_create_folders %}
+        <a href="{% url 'documents:folder_create' %}" class="btn btn-secondary"><i class="bi bi-folder-plus me-2"></i>Utwórz pierwszy folder</a>
+        {% endif %}
+    </div>
+{% endif %}
